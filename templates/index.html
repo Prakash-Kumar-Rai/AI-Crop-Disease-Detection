@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Crop Disease Detection & Online Agronomy</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="hero">
+
+        <div class="logo">🌱</div>
+
+        <h1>AI Crop Disease Detection</h1>
+
+        <p>
+            Upload a crop leaf image or paste an internet image URL for instant AI diagnosis and live agronomic treatment advice
+        </p>
+
+    </header>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="card">
+
+        <!-- ================= ERROR ALERT ================= -->
+        {% if error %}
+        <div class="error-banner">
+            <span class="error-icon">⚠️</span>
+            <div class="error-text">
+                <strong>Attention:</strong> {{ error }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ================= UPLOAD SECTION ================= -->
+
+        <section class="upload-section">
+
+            <h2>Select Crop Leaf Image</h2>
+
+            <!-- INPUT TABS -->
+            <div class="input-tabs">
+                <button
+                    type="button"
+                    class="tab-btn active"
+                    id="tab-file"
+                    onclick="switchTab('file')"
+                >
+                    📁 Upload Local File
+                </button>
+                <button
+                    type="button"
+                    class="tab-btn"
+                    id="tab-url"
+                    onclick="switchTab('url')"
+                >
+                    🌐 Internet Image URL
+                </button>
+            </div>
+
+            <!-- FORM -->
+            <form
+                action="/predict"
+                method="POST"
+                enctype="multipart/form-data"
+                id="prediction-form"
+            >
+                <input
+                    type="hidden"
+                    name="source_type"
+                    id="source-type"
+                    value="file"
+                >
+
+                <!-- FILE INPUT TAB CONTENT -->
+                <div id="file-input-pane" class="tab-pane">
+                    <div class="file-box">
+                        <input
+                            type="file"
+                            id="image"
+                            name="image"
+                            accept="image/*"
+                        >
+                    </div>
+                    <p class="input-hint">Supported formats: JPG, JPEG, PNG, WEBP</p>
+                </div>
+
+                <!-- URL INPUT TAB CONTENT -->
+                <div id="url-input-pane" class="tab-pane" style="display: none;">
+                    <div class="url-box">
+                        <input
+                            type="url"
+                            id="image-url-input"
+                            name="image_url"
+                            placeholder="https://example.com/crop-leaf-sample.jpg"
+                        >
+                        <button
+                            type="button"
+                            class="url-load-btn"
+                            onclick="previewUrlImage()"
+                        >
+                            Preview URL
+                        </button>
+                    </div>
+                    <p class="input-hint">Paste any public direct image URL from the internet</p>
+                </div>
+
+                <!-- IMAGE PREVIEW -->
+                <div
+                    id="preview-container"
+                    class="preview-container"
+                    style="display: none;"
+                >
+                    <p class="preview-label">Image Preview:</p>
+                    <img
+                        id="image-preview"
+                        src=""
+                        alt="Selected Crop Leaf"
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    class="detect-btn"
+                    id="detect-btn"
+                >
+                    🔍 Detect Disease & Get Treatment
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- ================= RESULT ================= -->
+
+        {% if prediction %}
+
+        <section class="result-card">
+
+            <h2>🌱 Detection Result & Agronomic Advice</h2>
+
+            {% if analyzed_image %}
+            <div class="analyzed-image-box">
+                <img
+                    src="{{ analyzed_image }}"
+                    alt="Analyzed Crop Leaf"
+                    class="analyzed-thumb"
+                >
+            </div>
+            {% endif %}
+
+            <!-- DISEASE -->
+            <div class="result-row">
+                <span>Identified Class</span>
+                <strong>
+                    {{ prediction.replace('___', ' — ').replace('_', ' ') }}
+                </strong>
+            </div>
+
+            <!-- CONFIDENCE -->
+            <div class="confidence-section">
+                <div class="confidence-header">
+                    <span>AI Confidence</span>
+                    <strong id="confidence-value">
+                        {{ confidence }}
+                    </strong>
+                </div>
+
+                <div class="progress-bg">
+                    <div
+                        class="progress-bar"
+                        id="confidence-bar"
+                    ></div>
+                </div>
+            </div>
+
+            <!-- WARNINGS -->
+            {% if confidence|replace('%', '')|float < 70 %}
+            <div class="warning">
+                <h3>⚠️ Low Confidence Warning</h3>
+                <p>
+                    The AI model predicted this class with low confidence. Please upload a clearer close-up of the leaf in good lighting or consult an agricultural extension specialist.
+                </p>
+            </div>
+            {% elif confidence|replace('%', '')|float < 85 %}
+            <div class="warning medium-warning">
+                <h3>ℹ️ Moderate Confidence</h3>
+                <p>
+                    The prediction is moderately confident. Inspect additional leaves across the crop canopy to confirm symptoms.
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- ================= INTERNET AGRONOMIC INTELLIGENCE ================= -->
+
+            {% if disease_info %}
+
+            <!-- DATA SOURCE BADGE -->
+            <div class="source-badge">
+                <span class="badge-icon">🌐</span>
+                <span class="badge-label">Intelligence Source:</span>
+                <strong>{{ disease_info.source }}</strong>
+            </div>
+
+            <!-- OVERVIEW -->
+            <div class="info-box overview-box">
+                <h3>📖 Disease Overview & Pathology</h3>
+                <p>{{ disease_info.overview }}</p>
+            </div>
+
+            <!-- SYMPTOMS -->
+            {% if disease_info.symptoms %}
+            <div class="info-box">
+                <h3>📋 Characteristic Symptoms</h3>
+                <ul class="advice-list">
+                    {% for symptom in disease_info.symptoms %}
+                    <li>{{ symptom }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- ORGANIC REMEDIES -->
+            {% if disease_info.organic_remedies %}
+            <div class="info-box organic-box">
+                <h3>🍃 Organic & Eco-Friendly Management</h3>
+                <ul class="advice-list">
+                    {% for remedy in disease_info.organic_remedies %}
+                    <li>{{ remedy }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- CHEMICAL TREATMENTS -->
+            {% if disease_info.chemical_treatments %}
+            <div class="info-box chemical-box">
+                <h3>🧪 Chemical Controls & Fungicides</h3>
+                <ul class="advice-list">
+                    {% for chem in disease_info.chemical_treatments %}
+                    <li>{{ chem }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- PREVENTION -->
+            {% if disease_info.prevention %}
+            <div class="info-box prevention-box">
+                <h3>🛡️ Preventive Agricultural Practices</h3>
+                <ul class="advice-list">
+                    {% for prev in disease_info.prevention %}
+                    <li>{{ prev }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% endif %}
+
+            <!-- TRY ANOTHER IMAGE -->
+            <button
+                type="button"
+                class="retry-btn"
+                onclick="tryAnotherImage()"
+            >
+                🔄 Try Another Image / URL
+            </button>
+
+        </section>
+
+        {% endif %}
+
+    </main>
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+        AI Crop Disease Detection System | Connected with Online Agronomy & Live Intelligence
+    </footer>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const confidenceValue = document.getElementById("confidence-value");
+    const confidenceBar = document.getElementById("confidence-bar");
+
+    if (confidenceValue && confidenceBar) {
+        let confidence = parseFloat(
+            confidenceValue.textContent.replace("%", "").trim()
+        );
+
+        if (!isNaN(confidence)) {
+            confidence = Math.max(0, Math.min(100, confidence));
+            confidenceBar.style.width = confidence + "%";
+        }
+    }
+});
+</script>
+
+</body>
+</html>
