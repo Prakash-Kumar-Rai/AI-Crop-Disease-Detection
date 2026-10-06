@@ -13,6 +13,252 @@ load_dotenv()
 # In-memory cache for disease information to avoid redundant network calls
 _DISEASE_CACHE = {}
 
+# 14 Supported Crops and their respective classes in the 38-class dataset
+CROP_CATALOG = {
+    "apple": {
+        "name": "Apple",
+        "icon": "🍎",
+        "classes": [
+            "Apple___Apple_scab",
+            "Apple___Black_rot",
+            "Apple___Cedar_apple_rust",
+            "Apple___healthy"
+        ],
+        "description": "Orchard tree susceptible to apple scab, cedar rust, and black rot."
+    },
+    "blueberry": {
+        "name": "Blueberry",
+        "icon": "🫐",
+        "classes": ["Blueberry___healthy"],
+        "description": "Acidic-soil perennial berry crop."
+    },
+    "cherry": {
+        "name": "Cherry",
+        "icon": "🍒",
+        "classes": [
+            "Cherry_(including_sour)___Powdery_mildew",
+            "Cherry_(including_sour)___healthy"
+        ],
+        "description": "Stone fruit tree susceptible to powdery mildew fungal infection."
+    },
+    "corn": {
+        "name": "Corn (Maize)",
+        "icon": "🌽",
+        "classes": [
+            "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+            "Corn_(maize)___Common_rust_",
+            "Corn_(maize)___Northern_Leaf_Blight",
+            "Corn_(maize)___healthy"
+        ],
+        "description": "Cereal crop vulnerable to common rust, leaf blight, and Cercospora spots."
+    },
+    "grape": {
+        "name": "Grape",
+        "icon": "🍇",
+        "classes": [
+            "Grape___Black_rot",
+            "Grape___Esca_(Black_Measles)",
+            "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
+            "Grape___healthy"
+        ],
+        "description": "Vineyard fruit prone to black rot, Esca measles, and leaf blight."
+    },
+    "orange": {
+        "name": "Orange / Citrus",
+        "icon": "🍊",
+        "classes": ["Orange___Haunglongbing_(Citrus_greening)"],
+        "description": "Citrus orchard fruit prone to Huanglongbing (Citrus Greening)."
+    },
+    "peach": {
+        "name": "Peach",
+        "icon": "🍑",
+        "classes": [
+            "Peach___Bacterial_spot",
+            "Peach___healthy"
+        ],
+        "description": "Stone fruit crop affected by bacterial shot-hole spot."
+    },
+    "pepper": {
+        "name": "Pepper (Bell)",
+        "icon": "🫑",
+        "classes": [
+            "Pepper,_bell___Bacterial_spot",
+            "Pepper,_bell___healthy"
+        ],
+        "description": "Solanaceous vegetable vulnerable to bacterial leaf spots."
+    },
+    "potato": {
+        "name": "Potato",
+        "icon": "🥔",
+        "classes": [
+            "Potato___Early_blight",
+            "Potato___Late_blight",
+            "Potato___healthy"
+        ],
+        "description": "Underground tuber crop vulnerable to early blight and late blight."
+    },
+    "raspberry": {
+        "name": "Raspberry",
+        "icon": "🍇",
+        "classes": ["Raspberry___healthy"],
+        "description": "Woody perennial cane fruit."
+    },
+    "soybean": {
+        "name": "Soybean",
+        "icon": "🌱",
+        "classes": ["Soybean___healthy"],
+        "description": "Oilseed legume vital for nitrogen fixation and grain yield."
+    },
+    "squash": {
+        "name": "Squash",
+        "icon": "🎃",
+        "classes": ["Squash___Powdery_mildew"],
+        "description": "Cucurbit crop prone to powdery mildew white powdery patches."
+    },
+    "strawberry": {
+        "name": "Strawberry",
+        "icon": "🍓",
+        "classes": [
+            "Strawberry___Leaf_scorch",
+            "Strawberry___healthy"
+        ],
+        "description": "Low-growing berry plant susceptible to fungal leaf scorch."
+    },
+    "tomato": {
+        "name": "Tomato",
+        "icon": "🍅",
+        "classes": [
+            "Tomato___Bacterial_spot",
+            "Tomato___Early_blight",
+            "Tomato___Late_blight",
+            "Tomato___Leaf_Mold",
+            "Tomato___Septoria_leaf_spot",
+            "Tomato___Spider_mites Two-spotted_spider_mite",
+            "Tomato___Target_Spot",
+            "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+            "Tomato___Tomato_mosaic_virus",
+            "Tomato___healthy"
+        ],
+        "description": "High-value horticultural crop with 10 distinct health and disease classes."
+    },
+
+    # =========================================================================
+    # EXPANDED GLOBAL CROPS (Diagnosed via Universal Multimodal AI Vision)
+    # =========================================================================
+    "rice": {
+        "name": "Rice (Paddy)",
+        "scientific": "Oryza sativa",
+        "icon": "🌾",
+        "is_universal": True,
+        "classes": ["Blast", "Bacterial Leaf Blight", "Brown Spot", "Sheath Blight", "Healthy"],
+        "description": "Global staple grain prone to blast, bacterial leaf blight, and brown spot."
+    },
+    "wheat": {
+        "name": "Wheat",
+        "scientific": "Triticum aestivum",
+        "icon": "🌾",
+        "is_universal": True,
+        "classes": ["Yellow Rust (Stripe)", "Brown Rust (Leaf)", "Powdery Mildew", "Septoria", "Healthy"],
+        "description": "Cereal staple crop susceptible to stripe rust, leaf rust, and powdery mildew."
+    },
+    "cotton": {
+        "name": "Cotton",
+        "scientific": "Gossypium",
+        "icon": "☁️",
+        "is_universal": True,
+        "classes": ["Bacterial Blight", "Alternaria Leaf Spot", "Fusarium Wilt", "Healthy"],
+        "description": "Fiber cash crop affected by angular leaf spot and boll rot."
+    },
+    "sugarcane": {
+        "name": "Sugarcane",
+        "icon": "🎋",
+        "scientific": "Saccharum officinarum",
+        "is_universal": True,
+        "classes": ["Red Rot", "Smut", "Rust", "Yellow Leaf Disease", "Healthy"],
+        "description": "Tropical sucrose crop susceptible to red rot and smut."
+    },
+    "mango": {
+        "name": "Mango",
+        "scientific": "Mangifera indica",
+        "icon": "🥭",
+        "is_universal": True,
+        "classes": ["Anthracnose", "Powdery Mildew", "Bacterial Canker", "Malformation", "Healthy"],
+        "description": "King of fruits vulnerable to anthracnose, powdery mildew, and bacterial canker."
+    },
+    "banana": {
+        "name": "Banana",
+        "scientific": "Musa acuminata",
+        "icon": "🍌",
+        "is_universal": True,
+        "classes": ["Black Sigatoka", "Panama Disease (Fusarium)", "Banana Bunchy Top Virus", "Healthy"],
+        "description": "Tropical fruit crop affected by destructive black sigatoka and wilt."
+    },
+    "guava": {
+        "name": "Guava",
+        "scientific": "Psidium guajava",
+        "icon": "🍈",
+        "is_universal": True,
+        "classes": ["Anthracnose", "Wilt", "Fruit Canker", "Healthy"],
+        "description": "Subtropical fruit prone to guava wilt and anthracnose spot."
+    },
+    "papaya": {
+        "name": "Papaya",
+        "scientific": "Carica papaya",
+        "icon": "🍈",
+        "is_universal": True,
+        "classes": ["Papaya Ringspot Virus", "Anthracnose", "Black Spot", "Healthy"],
+        "description": "Fast-growing fruit tree vulnerable to ringspot potyvirus."
+    },
+    "lemon": {
+        "name": "Lemon / Lime",
+        "scientific": "Citrus limon",
+        "icon": "🍋",
+        "is_universal": True,
+        "classes": ["Citrus Canker", "Anthracnose", "Greasy Spot", "Healthy"],
+        "description": "Acid citrus tree prone to Xanthomonas bacterial canker."
+    },
+    "onion": {
+        "name": "Onion / Garlic",
+        "scientific": "Allium cepa",
+        "icon": "🧅",
+        "is_universal": True,
+        "classes": ["Purple Blotch", "Downy Mildew", "Stemphylium Leaf Blight", "Healthy"],
+        "description": "Allium vegetable crop vulnerable to Alternaria purple blotch."
+    },
+    "rose": {
+        "name": "Rose",
+        "scientific": "Rosa",
+        "icon": "🌹",
+        "is_universal": True,
+        "classes": ["Black Spot", "Powdery Mildew", "Rose Rust", "Downy Mildew", "Healthy"],
+        "description": "Ornamental flora prone to Diplocarpon rosae black spot and rust."
+    },
+    "coffee": {
+        "name": "Coffee",
+        "scientific": "Coffea arabica",
+        "icon": "☕",
+        "is_universal": True,
+        "classes": ["Coffee Leaf Rust (Roya)", "Coffee Berry Disease", "Cercospora Leaf Spot", "Healthy"],
+        "description": "High-altitude beverage crop threatened by Hemileia vastatrix rust."
+    },
+    "tea": {
+        "name": "Tea",
+        "scientific": "Camellia sinensis",
+        "icon": "🍵",
+        "is_universal": True,
+        "classes": ["Blister Blight", "Grey Blight", "Brown Blight", "Healthy"],
+        "description": "Perennial shrub prone to Exobasidium blister blight."
+    },
+    "chili": {
+        "name": "Chili / Hot Pepper",
+        "scientific": "Capsicum annuum",
+        "icon": "🌶️",
+        "is_universal": True,
+        "classes": ["Chili Leaf Curl Virus", "Anthracnose / Dieback", "Bacterial Leaf Spot", "Healthy"],
+        "description": "Pungent spice crop affected by whitefly-transmitted leaf curl begomovirus."
+    }
+}
+
 # Comprehensive Agronomic Database for all crop-disease combinations
 AGRONOMIC_KNOWLEDGE_BASE = {
     "Apple_scab": {
@@ -622,6 +868,15 @@ def fetch_online_disease_info(raw_class_name: str) -> dict:
                 "Ensure proper crop spacing to maintain air circulation.",
                 "Regularly scout leaves to catch any pest or disease signs early."
             ],
+            "soil_nutrients": [
+                "Test soil pH annually (ideal range: 6.0 - 6.8 for most crops).",
+                "Apply balanced N-P-K (10-10-10 or 5-10-10) during active vegetative growth.",
+                "Top-dress with aged organic compost (2-3 inches) to maintain soil microbiome."
+            ],
+            "irrigation": [
+                "Utilize drip or soaker irrigation to prevent splashing fungal spores onto leaves.",
+                "Irrigate early in the morning so incidental leaf moisture evaporates quickly in sunlight."
+            ],
             "source": "Agronomic Plant Health Guide"
         }
         _DISEASE_CACHE[raw_class_name] = result
@@ -639,6 +894,14 @@ def fetch_online_disease_info(raw_class_name: str) -> dict:
             "organic_remedies": gemini_data.get("organic_remedies", []),
             "chemical_treatments": gemini_data.get("chemical_treatments", []),
             "prevention": gemini_data.get("prevention", []),
+            "soil_nutrients": gemini_data.get("soil_nutrients", [
+                "Avoid high nitrogen fertilizers during active disease outbreaks (excess nitrogen softens tissue).",
+                "Supplement calcium (calcium nitrate or gypsum) and potassium to strengthen plant cell walls."
+            ]),
+            "irrigation": gemini_data.get("irrigation", [
+                "Immediately cease overhead sprinkler watering; convert to drip or ground-level irrigation.",
+                "Allow the top 1-2 inches of soil to dry out between waterings to reduce ambient humidity."
+            ]),
             "source": gemini_data.get("source", "Google Gemini AI (Live Online Intelligence)")
         }
         _DISEASE_CACHE[raw_class_name] = result
@@ -683,6 +946,18 @@ def fetch_online_disease_info(raw_class_name: str) -> dict:
         "Practice crop rotation with non-host species."
     ])
 
+    soil_nutrients = [
+        "Avoid excess nitrogen fertilizer which creates succulent, disease-prone leaf growth.",
+        "Apply potassium and silica supplements to enhance cuticle thickness and defense resistance.",
+        "Maintain soil organic matter above 3% with well-composted organic material."
+    ]
+
+    irrigation = [
+        "Avoid overhead sprinkler irrigation; always irrigate directly at the root zone.",
+        "Water early in the morning so foliage dries quickly under daylight.",
+        "Ensure proper soil drainage to prevent root waterlogging and fungal sporulation."
+    ]
+
     result = {
         "crop": crop_clean,
         "disease": disease_clean,
@@ -692,6 +967,8 @@ def fetch_online_disease_info(raw_class_name: str) -> dict:
         "organic_remedies": organic_remedies,
         "chemical_treatments": chemical_treatments,
         "prevention": prevention,
+        "soil_nutrients": soil_nutrients,
+        "irrigation": irrigation,
         "source": source
     }
 

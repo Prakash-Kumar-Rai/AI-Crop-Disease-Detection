@@ -4,316 +4,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>AI Crop Disease Detection & Online Agronomy</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
+    <title>AgriVision AI — Intelligent Crop Disease Diagnostic Suite</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
 
-<div class="container">
+<div class="app-layout">
 
-    <!-- ================= HEADER ================= -->
+    <!-- ================= NAVBAR & BRAND ================= -->
+    <header class="app-navbar">
+        <div class="nav-brand">
+            <span class="brand-icon">🌱</span>
+            <div class="brand-text">
+                <h1>AgriVision <span class="brand-accent">AI</span></h1>
+                <p>Crop Disease Diagnostics & Agronomy Suite</p>
+            </div>
+        </div>
 
-    <header class="hero">
-
-        <div class="logo">🌱</div>
-
-        <h1>AI Crop Disease Detection</h1>
-
-        <p>
-            Upload a crop leaf image or paste an internet image URL for instant AI diagnosis and live agronomic treatment advice
-        </p>
-
+        <div class="nav-status">
+            <div class="status-pill online">
+                <span class="status-dot"></span>
+                <span>AI Vision Engine: Active</span>
+            </div>
+            <button type="button" class="nav-btn" onclick="openCropsModal()">
+                🌾 14 Crops & 38 Diseases
+            </button>
+        </div>
     </header>
 
 
-    <!-- ================= MAIN ================= -->
+    <!-- ================= HERO INTRO ================= -->
+    <section class="hero-banner">
+        <h2>Smart Plant Health & Crop Disease Diagnosis</h2>
+        <p>
+            Powered by MobileNetV2 deep learning and dual-layer plant verification. Snap a photo, upload a leaf image, or test sample crops for instant disease identification and agronomist treatment prescriptions.
+        </p>
 
-    <main class="card">
+        <div class="hero-metrics">
+            <div class="metric-chip">
+                <strong>38</strong> Classes Trained
+            </div>
+            <div class="metric-chip">
+                <strong>14</strong> Supported Crops
+            </div>
+            <div class="metric-chip">
+                <strong>95.01%</strong> Validation Accuracy
+            </div>
+            <div class="metric-chip">
+                <strong>Dual-Layer</strong> Non-Plant Filter
+            </div>
+        </div>
+    </section>
 
-        <!-- ================= ERROR ALERT ================= -->
+
+    <!-- ================= MAIN CONTAINER ================= -->
+    <main class="main-card">
+
+        <!-- ================= SYSTEM ERROR BANNER ================= -->
         {% if error %}
-        <div class="error-banner">
-            <span class="error-icon">⚠️</span>
-            <div class="error-text">
-                <strong>Attention:</strong> {{ error }}
+        <div class="alert-box alert-error">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">
+                <h4>System Notice</h4>
+                <p>{{ error }}</p>
             </div>
         </div>
         {% endif %}
 
-        <!-- ================= UPLOAD SECTION ================= -->
 
-        <section class="upload-section">
+        <!-- ================= NON-PLANT REJECTION VIEW ================= -->
+        {% if non_plant_detected %}
+        <section class="rejection-card">
+            <div class="rejection-header">
+                <div class="rejection-icon">🚫</div>
+                <div class="rejection-title">
+                    <h3>Non-Plant Image Detected</h3>
+                    <p class="rejection-subtitle">Input screened by AI Plant Verification Engine</p>
+                </div>
+            </div>
 
-            <h2>Select Crop Leaf Image</h2>
+            {% if analyzed_image %}
+            <div class="rejection-preview-box">
+                <img src="{{ analyzed_image }}" alt="Uploaded Image" class="rejection-thumb">
+                <div class="rejection-tag">Identified Subject: <strong>{{ verification.detected_subject }}</strong></div>
+            </div>
+            {% endif %}
 
-            <!-- INPUT TABS -->
-            <div class="input-tabs">
-                <button
-                    type="button"
-                    class="tab-btn active"
-                    id="tab-file"
-                    onclick="switchTab('file')"
-                >
-                    📁 Upload Local File
+            <div class="rejection-explanation">
+                <p>
+                    <strong>Why was this rejected?</strong><br>
+                    {{ verification.reason }}
+                </p>
+                <div class="rejection-stats">
+                    <span>Botanical Foliage Ratio: <strong>{{ verification.foliage_ratio }}%</strong> (Required: > 5%)</span>
+                    <span>Top Detected Object: <strong>{{ verification.top_labels[0] }}</strong></span>
+                </div>
+            </div>
+
+            <div class="guidelines-card">
+                <h4>📸 Guidelines for Accurate Crop Disease Diagnosis</h4>
+                <div class="guidelines-grid">
+                    <div class="guide-item">
+                        <span class="guide-num">1</span>
+                        <div>
+                            <strong>Focus on a Single Leaf:</strong>
+                            <p>Place the crop leaf in the center of the frame taking up at least 60% of the view.</p>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="guide-num">2</span>
+                        <div>
+                            <strong>Ensure Good Natural Lighting:</strong>
+                            <p>Avoid heavy shadows, glare, or dark indoor environments.</p>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="guide-num">3</span>
+                        <div>
+                            <strong>Avoid Background Clutter:</strong>
+                            <p>Do not include human faces, hands, clothing, animals, or indoor furniture in the image.</p>
+                        </div>
+                    </div>
+                    <div class="guide-item">
+                        <span class="guide-num">4</span>
+                        <div>
+                            <strong>Capture Visible Symptoms:</strong>
+                            <p>Focus closely on leaf spots, wilting, powder, or discoloration patches.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn-primary retry-action" onclick="resetToUpload()">
+                🔄 Try Another Leaf Image
+            </button>
+        </section>
+        {% endif %}
+
+
+        <!-- ================= DIAGNOSTIC RESULT VIEW ================= -->
+        {% if prediction %}
+        <section class="diagnostic-card" id="prescription-print-area">
+
+            <!-- PRINT HEADER (Visible only when printed) -->
+            <div class="print-only prescription-header">
+                <h2>AgriVision AI — Plant Pathology & Crop Prescription Report</h2>
+                <p>Automated Diagnostic Evaluation • Date: <span id="report-date"></span></p>
+                <hr>
+            </div>
+
+            <div class="diagnostic-topbar">
+                <div class="diag-header-left">
+                    <span class="diag-badge">Diagnosis Summary</span>
+                    <h2>{{ disease_info.crop }} — {{ disease_info.disease }}</h2>
+                </div>
+
+                <div class="diag-header-right">
+                    {% if disease_info.is_healthy %}
+                    <span class="condition-badge healthy-badge">🟢 Healthy Crop</span>
+                    {% else %}
+                    <span class="condition-badge disease-badge">🔴 Disease Detected</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- UNSUPPORTED LEAF ALERT (If other leaf was uploaded) -->
+            {% if is_unsupported_crop %}
+            <div class="alert-box alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                    <h4>Notice: Possible Unsupported Crop Leaf</h4>
+                    <p>{{ unsupported_message }}</p>
+                    <small>Tip: If you know your plant's species, use the <strong>Crop Selector</strong> dropdown above to filter specifically for your crop.</small>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- DUAL COLUMN: SCAN & CONFIDENCE -->
+            <div class="diagnostic-grid">
+
+                <!-- Left Column: Leaf Scan Viewer -->
+                <div class="leaf-viewer-panel">
+                    <div class="leaf-scan-container">
+                        {% if analyzed_image %}
+                        <img src="{{ analyzed_image }}" alt="Diagnosed Crop Leaf" class="diagnosed-leaf-img" id="diagnosed-leaf-img">
+                        <div class="scanner-hud-line"></div>
+                        <div class="scanner-hud-corners">
+                            <span class="corner tl"></span>
+                            <span class="corner tr"></span>
+                            <span class="corner bl"></span>
+                            <span class="corner br"></span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="intel-source-tag">
+                        <span>Intelligence Grounding:</span>
+                        <strong>{{ disease_info.source }}</strong>
+                    </div>
+                </div>
+
+                <!-- Right Column: Confidence & Key Overview -->
+                <div class="leaf-stats-panel">
+                    <div class="confidence-box">
+                        <div class="conf-meta">
+                            <span>Diagnostic Confidence</span>
+                            <strong class="conf-percent" id="confidence-value">{{ confidence }}</strong>
+                        </div>
+                        <div class="conf-bar-bg">
+                            <div class="conf-bar-fill" id="confidence-bar"></div>
+                        </div>
+
+                        {% if confidence|replace('%', '')|float < 70 %}
+                        <p class="conf-footnote warning-text">
+                            ⚠️ Low confidence score: The model suggests manual inspection or uploading a sharper close-up.
+                        </p>
+                        {% else %}
+                        <p class="conf-footnote success-text">
+                            ✅ High confidence classification supported by deep learning feature extraction.
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="overview-callout">
+                        <h4>📖 Overview & Clinical Pathology</h4>
+                        <p>{{ disease_info.overview }}</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= INTERACTIVE AGRONOMIC TABS ================= -->
+            <div class="prescription-tabs-container">
+                <div class="presc-nav-tabs">
+                    <button type="button" class="presc-tab active" onclick="switchPrescTab('symptoms', this)">
+                        📋 Symptoms
+                    </button>
+                    <button type="button" class="presc-tab" onclick="switchPrescTab('organic', this)">
+                        🍃 Organic Remedies
+                    </button>
+                    <button type="button" class="presc-tab" onclick="switchPrescTab('chemical', this)">
+                        🧪 Chemical Control
+                    </button>
+                    <button type="button" class="presc-tab" onclick="switchPrescTab('prevention', this)">
+                        🛡️ Cultural Prevention
+                    </button>
+                    <button type="button" class="presc-tab" onclick="switchPrescTab('soil', this)">
+                        🌾 Soil & Irrigation
+                    </button>
+                </div>
+
+                <!-- TAB PANES -->
+                <div class="presc-tab-content">
+
+                    <!-- SYMPTOMS -->
+                    <div id="pane-symptoms" class="presc-pane active">
+                        <h4>Characteristic Symptoms & Visual Signs</h4>
+                        <ul class="bullet-list">
+                            {% for item in disease_info.symptoms %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- ORGANIC -->
+                    <div id="pane-organic" class="presc-pane">
+                        <h4>Eco-Friendly & Organic Management Strategies</h4>
+                        <ul class="bullet-list green-bullets">
+                            {% for item in disease_info.organic_remedies %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- CHEMICAL -->
+                    <div id="pane-chemical" class="presc-pane">
+                        <h4>Registered Fungicides & Chemical Treatments</h4>
+                        <ul class="bullet-list orange-bullets">
+                            {% for item in disease_info.chemical_treatments %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                        <div class="disclaimer-mini">
+                            Always consult your local agricultural extension service for regional pesticide permits and follow label safety intervals.
+                        </div>
+                    </div>
+
+                    <!-- PREVENTION -->
+                    <div id="pane-prevention" class="presc-pane">
+                        <h4>Long-Term Cultural & Preventive Practices</h4>
+                        <ul class="bullet-list blue-bullets">
+                            {% for item in disease_info.prevention %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- SOIL & IRRIGATION -->
+                    <div id="pane-soil" class="presc-pane">
+                        <h4>Soil Nutrition, Fertilizer & Water Management</h4>
+                        <div class="sub-pane-section">
+                            <h5>🌱 Nutrient & Fertilizer Balance</h5>
+                            <ul class="bullet-list">
+                                {% for item in disease_info.soil_nutrients %}
+                                <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="sub-pane-section">
+                            <h5>💧 Irrigation & Moisture Control</h5>
+                            <ul class="bullet-list">
+                                {% for item in disease_info.irrigation %}
+                                <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="diagnostic-actions no-print">
+                <button type="button" class="btn-secondary" onclick="window.print()">
+                    🖨️ Print Prescription Report
                 </button>
-                <button
-                    type="button"
-                    class="tab-btn"
-                    id="tab-url"
-                    onclick="switchTab('url')"
-                >
-                    🌐 Internet Image URL
+                <button type="button" class="btn-primary" onclick="resetToUpload()">
+                    🔄 Scan Another Leaf
                 </button>
             </div>
 
-            <!-- FORM -->
-            <form
-                action="/predict"
-                method="POST"
-                enctype="multipart/form-data"
-                id="prediction-form"
-            >
-                <input
-                    type="hidden"
-                    name="source_type"
-                    id="source-type"
-                    value="file"
-                >
+        </section>
+        {% endif %}
 
-                <!-- FILE INPUT TAB CONTENT -->
-                <div id="file-input-pane" class="tab-pane">
-                    <div class="file-box">
-                        <input
-                            type="file"
-                            id="image"
-                            name="image"
-                            accept="image/*"
-                        >
+
+        <!-- ================= INPUT STUDIO (Always visible when not in result) ================= -->
+        {% if not prediction and not non_plant_detected %}
+        <section class="studio-section">
+
+            <form action="/predict" method="POST" enctype="multipart/form-data" id="main-prediction-form">
+                <input type="hidden" name="source_type" id="source-type" value="file">
+                <input type="hidden" name="sample_image" id="sample-image-input" value="">
+                <input type="hidden" name="camera_image" id="camera-image-input" value="">
+
+                <!-- STEP 1: TARGET CROP SELECTOR -->
+                <div class="step-card">
+                    <div class="step-badge">Step 1</div>
+                    <div class="step-details">
+                        <label for="target_crop" class="step-title">Select Crop Type (Optional)</label>
+                        <p class="step-desc">Selecting your specific crop helps the AI verify your leaf accurately and prevents confusion with other plants.</p>
                     </div>
-                    <p class="input-hint">Supported formats: JPG, JPEG, PNG, WEBP</p>
+
+                    <div class="crop-select-wrapper">
+                        <select name="target_crop" id="target_crop" class="modern-select">
+                            <option value="auto" {% if target_crop == 'auto' or not target_crop %}selected{% endif %}>🌿 Auto-Detect (All 14 Crops & 38 Diseases)</option>
+                            <option value="tomato" {% if target_crop == 'tomato' %}selected{% endif %}>🍅 Tomato</option>
+                            <option value="potato" {% if target_crop == 'potato' %}selected{% endif %}>🥔 Potato</option>
+                            <option value="apple" {% if target_crop == 'apple' %}selected{% endif %}>🍎 Apple</option>
+                            <option value="corn" {% if target_crop == 'corn' %}selected{% endif %}>🌽 Corn (Maize)</option>
+                            <option value="grape" {% if target_crop == 'grape' %}selected{% endif %}>🍇 Grape</option>
+                            <option value="pepper" {% if target_crop == 'pepper' %}selected{% endif %}>🫑 Pepper (Bell)</option>
+                            <option value="peach" {% if target_crop == 'peach' %}selected{% endif %}>🍑 Peach</option>
+                            <option value="cherry" {% if target_crop == 'cherry' %}selected{% endif %}>🍒 Cherry</option>
+                            <option value="strawberry" {% if target_crop == 'strawberry' %}selected{% endif %}>🍓 Strawberry</option>
+                            <option value="orange" {% if target_crop == 'orange' %}selected{% endif %}>🍊 Orange / Citrus</option>
+                            <option value="squash" {% if target_crop == 'squash' %}selected{% endif %}>🎃 Squash</option>
+                            <option value="soybean" {% if target_crop == 'soybean' %}selected{% endif %}>🌱 Soybean</option>
+                            <option value="blueberry" {% if target_crop == 'blueberry' %}selected{% endif %}>🫐 Blueberry</option>
+                            <option value="raspberry" {% if target_crop == 'raspberry' %}selected{% endif %}>🍇 Raspberry</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- URL INPUT TAB CONTENT -->
-                <div id="url-input-pane" class="tab-pane" style="display: none;">
-                    <div class="url-box">
-                        <input
-                            type="url"
-                            id="image-url-input"
-                            name="image_url"
-                            placeholder="https://example.com/crop-leaf-sample.jpg"
-                        >
-                        <button
-                            type="button"
-                            class="url-load-btn"
-                            onclick="previewUrlImage()"
-                        >
-                            Preview URL
+                <!-- STEP 2: CHOOSE INPUT METHOD -->
+                <div class="step-card">
+                    <div class="step-badge">Step 2</div>
+                    <div class="step-details">
+                        <span class="step-title">Provide Leaf Image</span>
+                        <p class="step-desc">Choose from file upload, live smartphone/webcam capture, public image URL, or 1-click test samples.</p>
+                    </div>
+
+                    <!-- INPUT MODE TABS -->
+                    <div class="mode-tabs">
+                        <button type="button" class="mode-tab active" id="tab-file" onclick="setMode('file')">
+                            📁 Upload File
+                        </button>
+                        <button type="button" class="mode-tab" id="tab-camera" onclick="setMode('camera')">
+                            📸 Live Camera
+                        </button>
+                        <button type="button" class="mode-tab" id="tab-url" onclick="setMode('url')">
+                            🌐 Image URL
+                        </button>
+                        <button type="button" class="mode-tab" id="tab-sample" onclick="setMode('sample')">
+                            🧪 Demo Samples
                         </button>
                     </div>
-                    <p class="input-hint">Paste any public direct image URL from the internet</p>
+
+                    <!-- MODE 1: FILE UPLOAD DROPZONE -->
+                    <div id="pane-file" class="mode-pane">
+                        <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+                            <input type="file" id="file-input" name="image" accept="image/*" style="display: none;">
+                            <div class="dropzone-content">
+                                <span class="drop-icon">🍃</span>
+                                <h4>Drag & Drop Leaf Photo Here</h4>
+                                <p>or <span class="browse-link">browse from your device</span></p>
+                                <span class="file-hint">Supports JPG, JPEG, PNG, WEBP (Max 15MB)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODE 2: LIVE CAMERA CAPTURE -->
+                    <div id="pane-camera" class="mode-pane" style="display: none;">
+                        <div class="camera-card">
+                            <div class="camera-stream-wrapper">
+                                <video id="camera-stream" autoplay playsinline muted></video>
+                                <canvas id="camera-canvas" style="display: none;"></canvas>
+                                <div class="camera-overlay-frame"></div>
+                            </div>
+
+                            <div class="camera-controls">
+                                <button type="button" class="cam-btn start-cam" id="btn-start-camera" onclick="initCamera()">
+                                    📷 Start Camera
+                                </button>
+                                <button type="button" class="cam-btn snap-btn" id="btn-snap-photo" onclick="captureSnapshot()" style="display: none;">
+                                    ⚡ Snap Leaf Photo
+                                </button>
+                                <button type="button" class="cam-btn switch-cam" id="btn-switch-camera" onclick="switchCameraFacing()" style="display: none;">
+                                    🔄 Flip Camera
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODE 3: INTERNET IMAGE URL -->
+                    <div id="pane-url" class="mode-pane" style="display: none;">
+                        <div class="url-input-group">
+                            <input type="url" id="image-url-input" name="image_url" placeholder="https://example.com/plant-leaf.jpg" class="modern-input">
+                            <button type="button" class="btn-load-url" onclick="loadUrlPreview()">
+                                Preview URL
+                            </button>
+                        </div>
+                        <span class="file-hint">Paste any direct public image URL from the internet</span>
+                    </div>
+
+                    <!-- MODE 4: QUICK DEMO SAMPLES -->
+                    <div id="pane-sample" class="mode-pane" style="display: none;">
+                        <p class="sample-intro">Click any pre-loaded crop sample to test the AI system instantly:</p>
+                        <div class="sample-cards-grid">
+                            <div class="sample-chip" onclick="selectDemoSample('tomato_healthy.jpg', 'tomato', 'Tomato — Healthy')">
+                                <img src="/static/samples/tomato_healthy.jpg" alt="Tomato Healthy">
+                                <span>🍅 Healthy Tomato</span>
+                            </div>
+                            <div class="sample-chip" onclick="selectDemoSample('potato_late_blight.jpg', 'potato', 'Potato — Late Blight')">
+                                <img src="/static/samples/potato_late_blight.jpg" alt="Potato Late Blight">
+                                <span>🥔 Potato Late Blight</span>
+                            </div>
+                            <div class="sample-chip" onclick="selectDemoSample('apple_scab.jpg', 'apple', 'Apple — Scab')">
+                                <img src="/static/samples/apple_scab.jpg" alt="Apple Scab">
+                                <span>🍎 Apple Scab</span>
+                            </div>
+                            <div class="sample-chip" onclick="selectDemoSample('corn_common_rust.jpg', 'corn', 'Corn — Common Rust')">
+                                <img src="/static/samples/corn_common_rust.jpg" alt="Corn Common Rust">
+                                <span>🌽 Corn Rust</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PREVIEW CONTAINER -->
+                    <div id="preview-panel" class="preview-panel" style="display: none;">
+                        <div class="preview-header">
+                            <span id="preview-label">Selected Image Preview:</span>
+                            <button type="button" class="btn-clear-preview" onclick="clearSelectedImage()">✕ Remove</button>
+                        </div>
+                        <div class="preview-box">
+                            <img id="image-preview" src="" alt="Selected Preview">
+                        </div>
+                    </div>
+
                 </div>
 
-                <!-- IMAGE PREVIEW -->
-                <div
-                    id="preview-container"
-                    class="preview-container"
-                    style="display: none;"
-                >
-                    <p class="preview-label">Image Preview:</p>
-                    <img
-                        id="image-preview"
-                        src=""
-                        alt="Selected Crop Leaf"
-                    >
+                <!-- SUBMIT ACTION BUTTON -->
+                <div class="submit-wrapper">
+                    <button type="submit" class="btn-analyze" id="analyze-btn">
+                        <span class="btn-text">🔍 Analyze Crop Leaf & Generate Prescription</span>
+                    </button>
                 </div>
-
-                <button
-                    type="submit"
-                    class="detect-btn"
-                    id="detect-btn"
-                >
-                    🔍 Detect Disease & Get Treatment
-                </button>
 
             </form>
 
         </section>
-
-
-        <!-- ================= RESULT ================= -->
-
-        {% if prediction %}
-
-        <section class="result-card">
-
-            <h2>🌱 Detection Result & Agronomic Advice</h2>
-
-            {% if analyzed_image %}
-            <div class="analyzed-image-box">
-                <img
-                    src="{{ analyzed_image }}"
-                    alt="Analyzed Crop Leaf"
-                    class="analyzed-thumb"
-                >
-            </div>
-            {% endif %}
-
-            <!-- DISEASE -->
-            <div class="result-row">
-                <span>Identified Class</span>
-                <strong>
-                    {{ prediction.replace('___', ' — ').replace('_', ' ') }}
-                </strong>
-            </div>
-
-            <!-- CONFIDENCE -->
-            <div class="confidence-section">
-                <div class="confidence-header">
-                    <span>AI Confidence</span>
-                    <strong id="confidence-value">
-                        {{ confidence }}
-                    </strong>
-                </div>
-
-                <div class="progress-bg">
-                    <div
-                        class="progress-bar"
-                        id="confidence-bar"
-                    ></div>
-                </div>
-            </div>
-
-            <!-- WARNINGS -->
-            {% if confidence|replace('%', '')|float < 70 %}
-            <div class="warning">
-                <h3>⚠️ Low Confidence Warning</h3>
-                <p>
-                    The AI model predicted this class with low confidence. Please upload a clearer close-up of the leaf in good lighting or consult an agricultural extension specialist.
-                </p>
-            </div>
-            {% elif confidence|replace('%', '')|float < 85 %}
-            <div class="warning medium-warning">
-                <h3>ℹ️ Moderate Confidence</h3>
-                <p>
-                    The prediction is moderately confident. Inspect additional leaves across the crop canopy to confirm symptoms.
-                </p>
-            </div>
-            {% endif %}
-
-            <!-- ================= INTERNET AGRONOMIC INTELLIGENCE ================= -->
-
-            {% if disease_info %}
-
-            <!-- DATA SOURCE BADGE -->
-            <div class="source-badge">
-                <span class="badge-icon">🌐</span>
-                <span class="badge-label">Intelligence Source:</span>
-                <strong>{{ disease_info.source }}</strong>
-            </div>
-
-            <!-- OVERVIEW -->
-            <div class="info-box overview-box">
-                <h3>📖 Disease Overview & Pathology</h3>
-                <p>{{ disease_info.overview }}</p>
-            </div>
-
-            <!-- SYMPTOMS -->
-            {% if disease_info.symptoms %}
-            <div class="info-box">
-                <h3>📋 Characteristic Symptoms</h3>
-                <ul class="advice-list">
-                    {% for symptom in disease_info.symptoms %}
-                    <li>{{ symptom }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            <!-- ORGANIC REMEDIES -->
-            {% if disease_info.organic_remedies %}
-            <div class="info-box organic-box">
-                <h3>🍃 Organic & Eco-Friendly Management</h3>
-                <ul class="advice-list">
-                    {% for remedy in disease_info.organic_remedies %}
-                    <li>{{ remedy }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            <!-- CHEMICAL TREATMENTS -->
-            {% if disease_info.chemical_treatments %}
-            <div class="info-box chemical-box">
-                <h3>🧪 Chemical Controls & Fungicides</h3>
-                <ul class="advice-list">
-                    {% for chem in disease_info.chemical_treatments %}
-                    <li>{{ chem }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            <!-- PREVENTION -->
-            {% if disease_info.prevention %}
-            <div class="info-box prevention-box">
-                <h3>🛡️ Preventive Agricultural Practices</h3>
-                <ul class="advice-list">
-                    {% for prev in disease_info.prevention %}
-                    <li>{{ prev }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            {% endif %}
-
-            <!-- TRY ANOTHER IMAGE -->
-            <button
-                type="button"
-                class="retry-btn"
-                onclick="tryAnotherImage()"
-            >
-                🔄 Try Another Image / URL
-            </button>
-
-        </section>
-
         {% endif %}
 
     </main>
 
 
     <!-- ================= FOOTER ================= -->
-
-    <footer>
-        AI Crop Disease Detection System | Connected with Online Agronomy & Live Intelligence
+    <footer class="app-footer">
+        <div class="footer-content">
+            <p>AgriVision AI Diagnostic Platform | Dual-Layer Verification Engine & MobileNetV2 Deep Learning</p>
+            <p class="footer-links">
+                <a href="javascript:void(0)" onclick="openCropsModal()">View 14 Crops & 38 Diseases</a> •
+                <a href="https://github.com" target="_blank" rel="noopener">Documentation</a>
+            </p>
+        </div>
     </footer>
 
 </div>
 
 
-<!-- ================= JAVASCRIPT ================= -->
+<!-- ================= SUPPORTED CROPS MODAL ================= -->
+<div id="crops-modal" class="modal-backdrop" onclick="closeCropsModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>🌾 14 Supported Crops & 38 Pathologies</h3>
+            <button type="button" class="modal-close-btn" onclick="closeCropsModal()">✕</button>
+        </div>
 
+        <div class="modal-body">
+            <p class="modal-desc">
+                Our core convolutional neural network is trained on 54,305 leaf images from the PlantVillage dataset across the following 14 agricultural crops:
+            </p>
+
+            <div class="crops-catalog-grid">
+                {% if crop_catalog %}
+                {% for key, crop in crop_catalog.items() %}
+                <div class="crop-catalog-card">
+                    <div class="crop-catalog-header">
+                        <span class="crop-icon">{{ crop.icon }}</span>
+                        <strong>{{ crop.name }}</strong>
+                        <span class="class-count">{{ crop.classes|length }} classes</span>
+                    </div>
+                    <p class="crop-desc">{{ crop.description }}</p>
+                    <ul class="crop-classes-list">
+                        {% for c in crop.classes %}
+                        <li>{{ c.split('___')[-1].replace('_', ' ') }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const confidenceValue = document.getElementById("confidence-value");
-    const confidenceBar = document.getElementById("confidence-bar");
-
-    if (confidenceValue && confidenceBar) {
-        let confidence = parseFloat(
-            confidenceValue.textContent.replace("%", "").trim()
-        );
-
-        if (!isNaN(confidence)) {
-            confidence = Math.max(0, Math.min(100, confidence));
-            confidenceBar.style.width = confidence + "%";
+    // Animate confidence bar
+    const confValElem = document.getElementById("confidence-value");
+    const confBarElem = document.getElementById("confidence-bar");
+    if (confValElem && confBarElem) {
+        let conf = parseFloat(confValElem.textContent.replace("%", "").trim());
+        if (!isNaN(conf)) {
+            conf = Math.max(0, Math.min(100, conf));
+            confBarElem.style.width = conf + "%";
         }
+    }
+
+    // Set report date
+    const reportDate = document.getElementById("report-date");
+    if (reportDate) {
+        reportDate.textContent = new Date().toLocaleDateString(undefined, {
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
     }
 });
 </script>

@@ -12,23 +12,34 @@ confidence, symptoms, prevention tips, and management advice.
 
 ## 🚀 Features
 
--   🌱 AI-based crop disease detection (MobileNetV2 Transfer Learning)
--   📸 Upload crop leaf images from local disk
--   🌐 **Internet Image URL Input**: Paste any direct image URL from the web to analyze instantly
--   🔍 Automatic disease prediction across 38 crop & disease classes
--   📊 Confidence percentage and animated progress bar
--   ⚠️ Low-confidence warning for uncertain predictions
--   🤖 **Live Online Agronomic Intelligence**:
-    -   Connects with **Google Gemini AI** for tailored agricultural recommendations
-    -   Live Wikipedia REST API lookup for pathogen pathology and background
-    -   Comprehensive 38-class agronomic guide with symptoms, organic remedies, chemical controls, and prevention
--   🍃 **Organic & Biological Treatments**: Natural remedies, composts, and biocontrols
--   🧪 **Chemical Controls & Fungicides**: Registered fungicides and spray recommendations
--   🛡️ **Preventative Agricultural Practices**: Crop rotation, pruning, and moisture control
--   📱 **Local Network / Mobile Access**: Hosted on `0.0.0.0` so phones on the same Wi-Fi can open the app
--   🌍 **Public Internet Sharing**: One-command public HTTPS tunnel (`python run_public.py`) to share globally
--   🔄 Try Another Image button & instant image previews
--   🖥️ Offline fallback support: Works completely offline when no internet is available
+-   🌱 **AI-Based Crop Disease Detection**: MobileNetV2 deep learning model with 95.01% validation accuracy.
+-   🛡️ **Dual-Layer Plant Verification Engine**:
+    -   ImageNet semantic classification pre-screens against non-plant subjects (humans, pets, gym gear, electronics, vehicles, furniture).
+    -   Botanical chlorophyll pigment analysis ($ExG = 2G - R - B$).
+    -   Rejects non-plant images automatically with helpful photographic advice.
+-   🎯 **Target Crop Selector & Disambiguation**:
+    -   Select specific crops (Tomato, Potato, Apple, Corn, Grape, Pepper, etc.) or use Auto-Detect.
+    -   Eliminates false Tomato misclassifications when inspecting other leaves.
+    -   Flags an explicit **Unsupported Species Alert** when an arbitrary leaf (e.g. Mango, Rose, Guava) is uploaded in Auto-Detect mode.
+-   📸 **4 Input Modes**:
+    1.  📁 **Drag-and-Drop File Upload**
+    2.  📷 **Live Camera Capture** (Direct webcam/phone camera with rear-camera flip)
+    3.  🌐 **Internet Image URL**
+    4.  🧪 **1-Click Demo Quick Samples** (Instant testing for Tomato, Potato Blight, Apple Scab, Corn Rust)
+-   📊 **Diagnostic Result Dashboard**:
+    -   Animated Leaf HUD Scanner overlay
+    -   Dynamic Confidence Meter
+    -   Condition Status Pills (🟢 Healthy vs. 🔴 Disease Detected)
+-   📋 **Interactive 5-Tab Agronomic Prescription**:
+    -   Characteristic Symptoms & Pathology
+    -   🍃 Organic & Eco-Friendly Management
+    -   🧪 Registered Chemical Controls & Fungicides
+    -   🛡️ Cultural & Preventive Practices
+    -   🌾 Soil Nutrition, Fertilizer & Drip Irrigation Timing
+-   🖨️ **Printable Doctor-Style Prescription Report**: One-click printable PDF prescription.
+-   📱 **Local Network / Mobile Wi-Fi Access**: Hosted on `0.0.0.0` for smartphone browsers.
+-   🌍 **Public Worldwide Internet Sharing**: One-command HTTPS tunnel (`python run_public.py`).
+-   🖥️ **100% Offline Capable**: Fully functional without requiring any paid online APIs.
 
 ------------------------------------------------------------------------
 
