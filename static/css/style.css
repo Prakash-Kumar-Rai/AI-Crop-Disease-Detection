@@ -79,8 +79,22 @@ body {
 }
 
 .brand-icon {
-    font-size: 34px;
-    filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.6));
+    font-size: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.1));
+    border: 2px solid rgba(52, 211, 153, 0.35);
+    border-radius: 14px;
+    filter: drop-shadow(0 0 14px rgba(52, 211, 153, 0.7));
+    animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.5)); }
+    50%       { filter: drop-shadow(0 0 22px rgba(52, 211, 153, 0.9)); }
 }
 
 .brand-text h1 {
